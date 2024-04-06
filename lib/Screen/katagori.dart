@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:toonrecommendation/widget/homebotton.dart';
 
-class startR extends StatelessWidget {
-  const startR({super.key});
+class katagori extends StatefulWidget {
+  const katagori({super.key});
+
+  @override
+  _StartRState createState() => _StartRState();
+}
+
+class _StartRState extends State<katagori> {
+  final Map<String, bool> _categories = {
+    '네이버 웹툰': false,
+    '카카오 웹툰': false,
+    '카카오페이지': false,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +38,17 @@ class startR extends StatelessWidget {
                 width: 350,
                 height: 480,
                 child: ListView(
-                  children: const [
-                    // Add your ListView items here
-                  ],
+                  children: _categories.keys.map((String key) {
+                    return CheckboxListTile(
+                      title: Text(key),
+                      value: _categories[key],
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _categories[key] = value!;
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
               ),
               const SizedBox(height: 20),
@@ -39,6 +58,7 @@ class startR extends StatelessWidget {
                   minimumSize: const Size(150, 50),
                 ),
                 onPressed: () {
+                  // 여기에 선택한 카테고리에 따른 로직을 추가하세요.
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const HomeBotton()),

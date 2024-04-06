@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toonrecommendation/Screen/startR.dart';
+import 'package:toonrecommendation/Screen/katagori.dart';
 
 class Button extends StatelessWidget {
   final String text;
@@ -34,7 +34,7 @@ class Button extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const startR()),
+              MaterialPageRoute(builder: (context) => const katagori()),
             );
           },
           child: Text(

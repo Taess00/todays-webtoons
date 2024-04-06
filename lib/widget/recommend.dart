@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class recommendscreen extends StatelessWidget {
-  const recommendscreen({super.key});
+class Loveddscreen extends StatelessWidget {
+  const Loveddscreen({super.key});
 
   @override
   Widget build(BuildContext context) {

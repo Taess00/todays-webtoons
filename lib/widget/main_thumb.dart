@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toonrecommendation/tab/detail_screen2.dart';
+import 'package:toonrecommendation/tab/detail_screen.dart';
 
 class MainThumbWidget extends StatelessWidget {
   final String title, id, thumb, service;

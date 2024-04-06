@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:toonrecommendation/tab/home_screens.dart';
-import 'package:toonrecommendation/tab/startM.dart';
+import 'package:toonrecommendation/tab/recommend_screens.dart';
 import 'package:toonrecommendation/widget/recommend.dart';
 
 class HomeBotton extends StatelessWidget {
@@ -29,33 +29,63 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const WebtoonScreen(),
-    const recommendscreen(),
+    const Loveddscreen(),
+    const RecommendScreens(),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex], // 현재 선택된 페이지 표시
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white,
-        currentIndex: _selectedIndex, // 현재 선택된 인덱스
-        onTap: _onItemTapped, // 탭을 눌렀을 때 실행할 함수
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '홈',
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: () async {
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('앱을 종료하시겠습니까?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // '취소하기' 선택
+                child: const Text('취소하기'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true), // '종료하기' 선택
+                child: const Text('종료하기'),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
-            label: '오늘의 웹툰보기',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: '좋아요한 웹툰',
-          ),
-        ],
+        );
+
+        return shouldPop ?? false; // showDialog가 null을 반환할 경우를 대비하여 false 반환
+      },
+      child: Scaffold(
+        body: _pages[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Colors.black,
+          selectedItemColor: Colors.white,
+          unselectedItemColor:
+              Colors.white.withOpacity(0.5), // 선택되지 않았을 때 아이콘의 투명도 조정
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 0
+                  ? Icons.home
+                  : Icons.home_outlined), // 조건부 아이콘
+              label: '홈',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(_selectedIndex == 1
+                  ? Icons.chrome_reader_mode
+                  : Icons.chrome_reader_mode_outlined),
+              label: '오늘의 웹툰보기',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(
+                  _selectedIndex == 2 ? Icons.favorite : Icons.favorite_border),
+              label: '좋아요한 웹툰',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -74,7 +104,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const StartM();
+    return const RecommendScreens();
   }
 }
 
@@ -94,6 +124,6 @@ class RecommendScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const recommendscreen();
+    return const Loveddscreen();
   }
 }

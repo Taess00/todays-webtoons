@@ -4,8 +4,9 @@ import 'package:toonrecommendation/models/webtoon_detail__kakao_model.dart';
 import 'package:toonrecommendation/models/webtoon_detail_model.dart';
 import 'package:toonrecommendation/models/webtoon_episode_model.dart';
 import 'package:toonrecommendation/models/webtoon_kakao_model.dart';
-import 'package:toonrecommendation/models/webtoon_model.dart';
+import 'package:toonrecommendation/models/webtoon_naver_model.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
 
 class ApiService {
   static const String baseUrl =
@@ -13,7 +14,7 @@ class ApiService {
   static const String baseKakaoUrl = "https://korea-webtoon-api.herokuapp.com";
   static const String today = "today";
 
-  static Future<List<WebtoonModel>> getTodaysToons() async {
+  static Future<List<WebtoonNaverModel>> getTodaysNaverToons() async {
     try {
       final url = Uri.parse('$baseUrl/$today');
       final response = await http.get(url);
@@ -21,7 +22,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final List<dynamic> webtoons = jsonDecode(response.body);
         return webtoons
-            .map((webtoon) => WebtoonModel.fromJson(webtoon))
+            .map((webtoon) => WebtoonNaverModel.fromJson(webtoon))
             .toList();
       } else {
         throw Exception('오늘의 네이버 웹툰을 가져오는것에 실패하였습니다.');
@@ -103,6 +104,68 @@ class ApiService {
         return WebtoonDetailKakaoModel.fromJson(webtoon['webtoons'][0]);
       } else {
         throw Exception('Failed to load kakao toon by id');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect to the server');
+    }
+  }
+
+  static Future<WebtoonKakaoModel> getRandomKakaoToon(String service) async {
+    try {
+      final now = DateTime.now();
+      final updateDay =
+          DateFormat('EEEE').format(now).substring(0, 3).toLowerCase();
+
+      final url =
+          Uri.parse('$baseKakaoUrl/?service=$service&updateDay=$updateDay');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> webtoons = jsonDecode(response.body)["webtoons"];
+
+        if (webtoons.isEmpty) {
+          throw Exception('No webtoons available');
+        }
+
+        // 랜덤으로 인덱스 선택
+        final randomIndex = Random().nextInt(webtoons.length);
+
+        var selectedWebtoon = webtoons[randomIndex];
+
+        if (selectedWebtoon["img"].startsWith('//')) {
+          selectedWebtoon["img"] =
+              selectedWebtoon["img"].replaceRange(0, 2, 'https://');
+        }
+
+        return WebtoonKakaoModel.fromJson(selectedWebtoon);
+      } else {
+        throw Exception('Failed to load todays kakao toons');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect to the server');
+    }
+  }
+
+  static Future<WebtoonNaverModel> getRandomNaverToon() async {
+    try {
+      final url = Uri.parse('$baseUrl/$today');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> webtoons = jsonDecode(response.body);
+
+        if (webtoons.isEmpty) {
+          throw Exception('No webtoons available');
+        }
+
+        // 랜덤으로 인덱스 선택
+        final randomIndex = Random().nextInt(webtoons.length);
+
+        var selectedWebtoon = webtoons[randomIndex];
+
+        return WebtoonNaverModel.fromJson(selectedWebtoon);
+      } else {
+        throw Exception('Failed to load todays naver toons');
       }
     } catch (e) {
       throw Exception('Failed to connect to the server');

@@ -1,31 +1,88 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toonrecommendation/models/webtoon_detail__kakao_model.dart';
 import 'package:toonrecommendation/models/webtoon_detail_model.dart';
 import 'package:toonrecommendation/models/webtoon_episode_model.dart';
+import 'package:toonrecommendation/models/webtoon_naver_model.dart';
 import 'package:toonrecommendation/services/api_service.dart';
+import 'package:toonrecommendation/widget/episode.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class DetailScreen extends StatefulWidget {
-  final String title, thumb, id;
+import '../models/webtoon_kakao_model.dart';
 
-  const DetailScreen({
-    super.key,
-    required this.title,
-    required this.thumb,
-    required this.id,
-  });
+class DetailScreen2 extends StatefulWidget {
+  final String title, img, webtoonId, service;
+  const DetailScreen2(
+      {super.key,
+      required this.title,
+      required this.img,
+      required this.webtoonId,
+      required this.service});
 
   @override
-  State<DetailScreen> createState() => _DetailScreenState();
+  State<DetailScreen2> createState() => _DetailScreenState();
 }
 
-class _DetailScreenState extends State<DetailScreen> {
+class _DetailScreenState extends State<DetailScreen2> {
   late Future<WebtoonDetailModel> webtoon;
   late Future<List<WebtoonEpisodeModel>> episodes;
+  late Future<WebtoonDetailKakaoModel> webtoonKakao;
+  late SharedPreferences prefs;
+
+  bool isLiked = false;
+
+  Future initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+    final likedToons = prefs.getStringList('LikedToons');
+
+    if (likedToons != null) {
+      if (likedToons.contains(widget.webtoonId) == true) {
+        setState(() {
+          isLiked = true;
+        });
+      }
+    } else {
+      // 앱 초기 실행시
+      await prefs.setStringList('LikedToons', []);
+    }
+  }
+
+  onHeartTap() async {
+    final likedToons = prefs.getStringList('LikedToons');
+    if (likedToons != null) {
+      if (isLiked) {
+        likedToons.remove(widget.webtoonId);
+      } else {
+        likedToons.add(widget.webtoonId);
+      }
+
+      await prefs.setStringList('LikedToons', likedToons);
+      setState(() {
+        isLiked = !isLiked;
+      });
+    }
+  }
+
+  final List<String> servicesNameKr = ['네이버 웹툰', '카카오페이지 웹툰', '카카오 웹툰'];
+  final List<String> servicesNameEng = ['naver', 'kakaoPage', 'kakao'];
+
+  final Future<List<WebtoonNaverModel>> webtoonsNaver =
+      ApiService.getTodaysNaverToons();
+  late Future<List<WebtoonKakaoModel>> webtoonsKakaoPage;
+  late Future<List<WebtoonKakaoModel>> webtoonsKakao;
 
   @override
   void initState() {
     super.initState();
-    webtoon = ApiService.getToonById(widget.id);
-    episodes = ApiService.getLatestEpisodesById(widget.id);
+
+    webtoonsKakaoPage = ApiService.getTodaysKakaoToons(servicesNameEng[1]);
+    webtoonsKakao = ApiService.getTodaysKakaoToons(servicesNameEng[2]);
+
+    webtoon = ApiService.getToonById(widget.webtoonId);
+    episodes = ApiService.getLatestEpisodesById(widget.webtoonId);
+    webtoonKakao = ApiService.getKakaoToonById(widget.title);
+
+    initPrefs();
   }
 
   @override
@@ -33,93 +90,159 @@ class _DetailScreenState extends State<DetailScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        centerTitle: true,
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.black,
-        elevation: 2,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.green,
+        actions: [
+          IconButton(
+            icon: isLiked
+                ? const Icon(Icons.favorite_outlined)
+                : const Icon(Icons.favorite_border_outlined),
+            onPressed: () => onHeartTap(),
+          )
+        ],
+        backgroundColor: Colors.transparent,
         title: Text(
           widget.title,
-          style: const TextStyle(
-            fontSize: 20,
-          ),
         ),
+        foregroundColor: Colors.black87,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 40,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Hero(
+              tag: widget.webtoonId,
+              child: Container(
+                height: 500,
+                width: MediaQuery.of(context).size.width,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: const Color(0xfffcf0f0)),
+                child: Image.network(
+                  widget.img,
+                  alignment: Alignment.topCenter,
+                  fit: BoxFit.cover,
+                  headers: const {
+                    "User-Agent":
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+                  },
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Hero(
-                    //hero는 애니메이션 추가 id만 애니메이션 넣음
-                    tag: widget.id,
-                    child: Container(
-                      width: 180,
-                      clipBehavior: Clip.hardEdge,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 10,
-                              offset: const Offset(7, 7),
-                              color: Colors.black.withOpacity(0.5),
-                            )
-                          ]),
-                      //사진 동그라미로 만들어줌 de만 쓰면안되니까 강제로되도록 clip도 사용하자
-                      child: Image.network(widget.thumb, headers: const {
-                        'User-Agent':
-                            'Mozilla/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36(KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-                        'Referer': 'https://comic.naver.com',
-                      }),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 25,
-              ),
-              FutureBuilder(
-                future: webtoon,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 30),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            snapshot.data!.about,
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 15,
-                          ),
-                          Text(
-                            '${snapshot.data!.genre} / ${snapshot.data!.age}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return const Text("...");
-                },
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 30),
+            if (widget.service == servicesNameEng[0]) naverDetail(),
+            if (widget.service == servicesNameEng[2] ||
+                widget.service == servicesNameEng[1])
+              kakaoDetail(),
+          ],
         ),
       ),
+    );
+  }
+
+  Column naverDetail() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: FutureBuilder(
+              future: webtoon,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '작품소개',
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        snapshot.data!.about,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${snapshot.data!.genre} / ${snapshot.data!.age}',
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  );
+                } else {
+                  return const Center(
+                      child: CircularProgressIndicator(color: Colors.green));
+                }
+              }),
+        ),
+        FutureBuilder(
+            future: episodes,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    for (var episode in snapshot.data!.length > 10
+                        ? snapshot.data!.sublist(0, 10)
+                        : snapshot.data!)
+                      EpisodeWidget(
+                        episode: episode,
+                        webtoonId: widget.webtoonId,
+                      ),
+                  ],
+                );
+              }
+              return Container();
+            })
+      ],
+    );
+  }
+
+  Padding kakaoDetail() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: FutureBuilder(
+          future: webtoonKakao,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return SizedBox(
+                height: MediaQuery.of(context).size.height / 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '작가',
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      snapshot.data!.author,
+                    ),
+                    const Expanded(child: SizedBox(height: 10)),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: 45,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final url = Uri.parse(snapshot.data!.url);
+                          launchUrl(url);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                        child: const Text(
+                          "바로보기",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontFamily: 'Pretendard',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              );
+            } else {
+              return const Center(
+                  child: CircularProgressIndicator(color: Colors.green));
+            }
+          }),
     );
   }
 }

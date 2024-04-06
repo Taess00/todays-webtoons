@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:toonrecommendation/Screen/startR.dart';
+import 'package:toonrecommendation/widget/homebotton.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
@@ -59,7 +59,7 @@ class MyAppHome extends StatelessWidget {
               ],
             ),
             const SizedBox(
-              height: 190,
+              height: 170,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -76,13 +76,13 @@ class MyAppHome extends StatelessWidget {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF80DD2E),
-                        minimumSize: const Size(150, 50),
+                        minimumSize: const Size(150, 60),
                       ),
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const startR()),
+                              builder: (context) => const HomeBotton()),
                         );
                       },
                       child: const Text(

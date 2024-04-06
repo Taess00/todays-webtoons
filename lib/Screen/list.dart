@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:toonrecommendation/models/webtoon_kakao_model.dart';
-import 'package:toonrecommendation/models/webtoon_model.dart';
-import 'package:toonrecommendation/tab/detail_screen2.dart';
+import 'package:toonrecommendation/models/webtoon_naver_model.dart';
+import 'package:toonrecommendation/tab/detail_screen.dart';
 
 import '../services/api_service.dart';
 
@@ -12,7 +12,8 @@ class ListScreen2 extends StatelessWidget {
   final List<String> servicesNameKr = ['네이버 웹툰', '카카오페이지 웹툰', '카카오 웹툰'];
   final List<String> servicesNameEng = ['naver', 'kakaoPage', 'kakao'];
 
-  final Future<List<WebtoonModel>> webtoons = ApiService.getTodaysToons();
+  final Future<List<WebtoonNaverModel>> webtoons =
+      ApiService.getTodaysNaverToons();
   late Future<List<WebtoonKakaoModel>> webtoonsKakao;
   late Future<List<WebtoonKakaoModel>> webtoonsKakaoPage;
 
